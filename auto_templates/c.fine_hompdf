@@ -1,0 +1,11 @@
+parnames = {1:'lambda', 2:'beta', 3:'epsil'}
+unames = {1:'x'}
+NDIM =   1, IPS =   1, IRS =   0, ILP =   1
+ICP =  [1]
+NTST=   5, NCOL=   4, IAD =   3, ISP =   2, ISW = 1, IPLT= 0, NBC= 0, NINT= 0
+NMX=  3200, NPR=   20, MXBF=   0, IID =   3, ITMX= 8, ITNW=7, NWTN= 3, JAC= 0
+EPSL= 1e-08, EPSU = 1e-08, EPSS =1e-07
+DS  =  0.01, DSMIN= 0.00005, DSMAX=   0.001, IADS=   1
+NPAR = 3, THL =  {}, THU =  {}
+UZSTOP = {'lambda': [-2.757D-02, -5.790D-03], 'beta': [4.127D+00, 4.586D+00]},
+RL0=-2.757D-02, RL1=-5.790D-03

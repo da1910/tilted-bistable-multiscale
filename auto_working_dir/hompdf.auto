@@ -1,0 +1,18 @@
+
+# Load the files hompdf.f90 and c.hompdf into the AUTO
+# command interpreter.
+hompdf = load('hompdf')
+
+# Run and store the result in the Python variable lmbda
+lmbda = run(hompdf)+ run(hompdf, DS='-')
+lmbda = relabel(lmbda)
+save(lmbda,'lmbda')
+
+# Load limit point location and continue in two parameters, saving as cusp
+lp1 = load(lmbda('LP1'), ISW=2, ICP=[1,2])
+cusp = run(lp1) + run(lp1, DS='-')
+cusp = relabel(cusp)
+save(cusp, 'cusp')
+
+# Clean up
+clean()

@@ -1,0 +1,8 @@
+# Load limit point location and continue in two parameters, saving as cusp
+lp1 = load('fine_hompdf', ISW=2, ICP=[1,2])
+cusp = run(lp1) + run(lp1, DS='-')
+cusp = relabel(cusp)
+save(cusp, 'fine_cusp')
+
+# Clean up
+clean()
