@@ -72,9 +72,10 @@ for eta in etas:
                         'LAMBDAINPUT': to_fortran_string(lambda_initial),
                         'ETAINPUT': to_fortran_string(eta),
                         'X0INPUT': to_fortran_string(lend)})
-
-    p = subprocess.Popen(['auto', os.path.join(temp_dir, 'hompdf.f90')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.chdir(temp_dir)
+    p = subprocess.Popen(['auto', 'hompdf.auto'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+    os.chdir('../')
 
     print('Processing results...')
     cusp_data = process_input(os.path.join(temp_dir, 'b.cusp'))
@@ -84,14 +85,21 @@ for eta in etas:
         if len(row) == 2:
             row_indices = np.where(cusp_data[:, 2] == -22)[0]
             means = np.mean(row, 0)
-            cusp_data = np.vstack(
-                (cusp_data[range(0, row_indices[0]), :], means, cusp_data[range(row_indices[1] + 1, -1, -1), :]))
+            cusp_data = np.vstack((
+                cusp_data[range(0, row_indices[0]), :],
+                means,
+                cusp_data[range(row_indices[1] + 1, cusp_data.shape[0]), :]
+            ))
             row = np.atleast_2d(row[1])
 
         critical_approach_data = np.vstack((critical_approach_data, np.hstack((row[0, [4, 6, 7]], eta))))
         ends = np.where(cusp_data[:, 3] == 29)[0]
         # noinspection PyUnboundLocalVariable
-        cusp_data = cusp_data[np.hstack((range(ends[0] - 1, -1, -1), range(ends[0] + 1, len(cusp_data)))), :]
+        cusp_data = cusp_data[np.hstack((
+            range(ends[0] - 1, -1, -1),
+            range(ends[0] + 1, len(cusp_data))
+        )), :]
+
         row = np.where(cusp_data[:, 2] == -22)[0]
 
         b1 = cusp_data[range(0, row[0] + 1), :][:, (4, 6, 7)]
@@ -127,9 +135,10 @@ for eta in etas:
 
     print("Dumping raw output from AUTO to '{}'...\n".format(auto_output_dir))
     os.remove(os.path.join(temp_dir, 'hompdf.f90'))
-    os.mkdir(os.path.join(auto_output_dir, eta))
+    escaped_folder_name = str(round(eta, 4)).replace('.', '_')
+    os.mkdir(os.path.join(auto_output_dir, escaped_folder_name))
     for output_file in OUTPUT_FILES:
-        os.rename(os.path.join(temp_dir, output_file), os.path.join(auto_output_dir, eta))
+        os.rename(os.path.join(temp_dir, output_file), os.path.join(auto_output_dir, escaped_folder_name, output_file))
 
 print("Dumping processed results to '{}'...".format(processed_output_dir))
 with open(os.path.join(processed_output_dir, 'approach.json'), 'w', encoding='utf8') as fp:
