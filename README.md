@@ -1,4 +1,4 @@
-#Tilted Multiscale Bifurcation
+# Tilted Multiscale Bifurcation
 ##Problem formulation
 This repo contains python scripts to interface with AUTO-07p and investigate effect of noise in a multiscale potentials.
 The steady-state behaviour of the system
