@@ -156,3 +156,6 @@ with open(os.path.join(processed_output_dir, 'd_lambda_long.json'), 'w', encodin
 with open(os.path.join(processed_output_dir, 'fits.json'), 'w', encoding='utf8') as fp:
     json.dump(fitted_polynomials, fp)
 
+with open(os.path.join(processed_output_dir, 'crit_data.json'), 'w', encoding='utf8') as fp:
+    json.dump(critical_approach_data, fp)
+
