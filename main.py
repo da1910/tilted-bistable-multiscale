@@ -24,6 +24,7 @@ def process_input(filename: str) -> np.ndarray:
                 if flag:
                     block_index = block_index + 1
                     flag = False
+    data_blocks[0] = data_blocks[0][-1:1:-1]
     return np.vstack(data_blocks)
 
 
@@ -33,15 +34,11 @@ def left_end_function(x: float, a1: float, a2: float) -> float:
 
 beta_initial = 20.0
 lambda_initial = -2.0
-etas = np.logspace(-3, -1, 20)
+etas = np.logspace(-3, -1, 21)
 lambda_ = lambda_initial
 critical_approach_data = np.empty((0, 4), float)
 
-approach_results = {}
-d_lambda_results = {}
-approach_long_results = {}
-d_lambda_long_results = {}
-fitted_polynomials = {}
+results = {}
 
 dist_tol = 1e-8
 beta_tol = 1e-8
@@ -93,12 +90,6 @@ for eta in etas:
             row = np.atleast_2d(row[1])
 
         critical_approach_data = np.vstack((critical_approach_data, np.hstack((row[0, [4, 6, 7]], eta))))
-        ends = np.where(cusp_data[:, 3] == 29)[0]
-        # noinspection PyUnboundLocalVariable
-        cusp_data = cusp_data[np.hstack((
-            range(ends[0] - 1, -1, -1),
-            range(ends[0] + 1, len(cusp_data))
-        )), :]
 
         row = np.where(cusp_data[:, 2] == -22)[0]
 
@@ -120,16 +111,20 @@ for eta in etas:
         d_lmbda = abs(b1_int[:, 0] - b2_int[:, 0])
         d_lmbda_long = abs(b1_int_long[:, 0] - b2_int_long[:, 0])
 
-        b1start = b1_int[0, :]
-        b2start = b2_int[0, :]
-        cusp = critical_approach_data[-1, 0:2]
 
-        approach_results[eta] = approach
-        d_lambda_results[eta] = d_lmbda
-        approach_long_results[eta] = approach_long
-        d_lambda_long_results[eta] = d_lmbda_long
+        results[eta] = {}
+        results[eta]['approach'] = approach.tolist()
+        results[eta]['d_lambda'] = d_lmbda.tolist()
+        results[eta]['approach_long'] = approach_long.tolist()
+        results[eta]['d_lambda_long'] = d_lmbda_long.tolist()
 
-        fitted_polynomials[eta] = np.polyfit(np.log10(d_lmbda), np.log10(approach), 1)
+        valid_rows = ~np.isnan(d_lmbda)
+
+        # noinspection PyTypeChecker
+        fit = np.polynomial.polynomial.Polynomial.fit(np.log10(d_lmbda[valid_rows]),
+                                                      np.log10(approach[valid_rows]),
+                                                      1)  # type: np.polynomial.polynomial.Polynomial
+        results[eta]['fit'] = fit.coef.tolist()
     else:
         print('No cusp found, skipping...\n')
 
@@ -141,21 +136,9 @@ for eta in etas:
         os.rename(os.path.join(temp_dir, output_file), os.path.join(auto_output_dir, escaped_folder_name, output_file))
 
 print("Dumping processed results to '{}'...".format(processed_output_dir))
-with open(os.path.join(processed_output_dir, 'approach.json'), 'w', encoding='utf8') as fp:
-    json.dump(approach_results, fp)
-
-with open(os.path.join(processed_output_dir, 'd_lambda.json'), 'w', encoding='utf8') as fp:
-    json.dump(d_lambda_results, fp)
-
-with open(os.path.join(processed_output_dir, 'approach_long.json'), 'w', encoding='utf8') as fp:
-    json.dump(approach_long_results, fp)
-
-with open(os.path.join(processed_output_dir, 'd_lambda_long.json'), 'w', encoding='utf8') as fp:
-    json.dump(d_lambda_long_results, fp)
-
-with open(os.path.join(processed_output_dir, 'fits.json'), 'w', encoding='utf8') as fp:
-    json.dump(fitted_polynomials, fp)
+with open(os.path.join(processed_output_dir, 'results.json'), 'w', encoding='utf8') as fp:
+    json.dump(results, fp)
 
 with open(os.path.join(processed_output_dir, 'crit_data.json'), 'w', encoding='utf8') as fp:
-    json.dump(critical_approach_data, fp)
+    json.dump(critical_approach_data.tolist(), fp)
 
