@@ -20,15 +20,16 @@ def interp1(x: np.ndarray, y: np.ndarray, new_x: np.ndarray) -> np.ndarray:
 
 def interp1_inner(x: np.ndarray, y: np.ndarray, new_x: float) -> np.ndarray:
     index = bisect_left_naive(x, new_x)
+    print(f"Found {new_x} as position {index} in array")
     if index is None:
         out = np.ndarray((1, y.shape[1]))
         out[:] = np.nan
         return out
-    x_interval = x[index] - x[index - 1]
+    x_interval = x[index + 1] - x[index]
     x_diff = new_x - x[index]
     ratio = x_diff / x_interval
-    y_diff = y[index, :] - y[index - 1, :]
-    return y[index - 1, :] + ratio * y_diff
+    y_diff = y[index + 1, :] - y[index, :]
+    return y[index, :] + ratio * y_diff
 
 
 def bisect_left_naive(x_vector, x_target) -> int:
@@ -58,3 +59,24 @@ def bisect_left_naive(x_vector, x_target) -> int:
 
 def to_fortran_string(number: float) -> str:
     return '{:.3e}'.format(number).replace('e', 'D')
+
+
+def process_input(filename: str) -> np.ndarray:
+    with open(filename, 'r') as f:
+        data_blocks = []
+        flag = False
+        block_index = 0
+        for line in f.readlines():
+            if int(line.lstrip()[0]) > 0:
+                flag = True
+                line_contents = [float(x) for x in line.split()]
+                if len(data_blocks) <= block_index:
+                    data_blocks.append(np.array(line_contents))
+                else:
+                    data_blocks[block_index] = np.vstack((data_blocks[block_index], line_contents))
+            else:
+                if flag:
+                    block_index = block_index + 1
+                    flag = False
+    data_blocks[0] = data_blocks[0][-1:1:-1]
+    return np.vstack(data_blocks)

@@ -7,27 +7,6 @@ import scipy.optimize
 from util import *
 
 
-def process_input(filename: str) -> np.ndarray:
-    with open(filename, 'r') as f:
-        data_blocks = []
-        flag = False
-        block_index = 0
-        for line in f.readlines():
-            if int(line.lstrip()[0]) > 0:
-                flag = True
-                line_contents = [float(x) for x in line.split()]
-                if len(data_blocks) <= block_index:
-                    data_blocks.append(np.array(line_contents))
-                else:
-                    data_blocks[block_index] = np.vstack((data_blocks[block_index], line_contents))
-            else:
-                if flag:
-                    block_index = block_index + 1
-                    flag = False
-    data_blocks[0] = data_blocks[0][-1:1:-1]
-    return np.vstack(data_blocks)
-
-
 def left_end_function(x: float, a1: float, a2: float) -> float:
     return x ** 3 - a1 * x + a2
 
