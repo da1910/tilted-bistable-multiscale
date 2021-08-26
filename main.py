@@ -99,11 +99,13 @@ for eta in etas:
 
         valid_rows = ~np.isnan(d_lmbda)
 
-        # noinspection PyTypeChecker
-        fit = np.polynomial.polynomial.Polynomial.fit(np.log10(d_lmbda[valid_rows]),
-                                                      np.log10(approach[valid_rows]),
-                                                      1)  # type: np.polynomial.polynomial.Polynomial
-        results[eta]['fit'] = fit.coef.tolist()
+        # Fit following approach from numpy.linalg.lstsq documentation
+        y = np.log10(d_lmbda[valid_rows])
+        x = np.log10(approach[valid_rows])
+        A = np.vstack([x, np.ones(len(x))]).T
+
+        m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+        results[eta]['fit'] = [m, c]
     else:
         print('No cusp found, skipping...\n')
 
