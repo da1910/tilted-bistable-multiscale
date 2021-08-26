@@ -1,57 +1,63 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import cm
 import os
 import json
 
 input_files = os.listdir('./processed_output')
 sorted_files = sorted(input_files, reverse=True)
 selected_data = './processed_output/{}'.format(sorted_files[0])
+viridis = cm.get_cmap('viridis')
 
-with open(os.path.join(selected_data, 'approach.json'), encoding='utf8') as f:
-    approach = json.load(f)
-
-with open(os.path.join(selected_data, 'approach_long.json'), encoding='utf8') as f:
-    approach_long = json.load(f)
-
-with open(os.path.join(selected_data, 'd_lambda.json'), encoding='utf8') as f:
-    d_lambda = json.load(f)
-
-with open(os.path.join(selected_data, 'd_lambda_long.json'), encoding='utf8') as f:
-    d_lambda_long = json.load(f)
-
-with open(os.path.join(selected_data, 'fits.json'), encoding='utf8') as f:
-    fits = json.load(f)
+with open(os.path.join(selected_data, 'results.json'), encoding='utf8') as f:
+    data = json.load(f)
 
 with open(os.path.join(selected_data, 'crit_data.json'), encoding='utf8') as f:
     crit_data = json.load(f)
 
+eta_dict = {value: np.log10(float(value)) for value in data.keys()}
+min_eta = min(eta_dict.values())
+eta_range = max(eta_dict.values()) - min_eta
+
+for k, v in eta_dict.items():
+    eta_dict[k] = (v - min_eta)/eta_range
 
 figure_1, ax_1 = plt.subplots()
 ax_1.set_xlabel(r"$\log\left(\sigma_{c}-\sigma\right)/\sigma_{c}$")
 ax_1.set_ylabel(r"$\log\left|\alpha_{c}\right|/N$")
-for eta in d_lambda:
-    current_approach = approach[eta]
-    current_d_lambda = d_lambda[eta]
-    ax_1.scatter(np.log10(current_approach), np.log10(current_d_lambda),
-                 90, np.tile(np.log10(float(eta)), (100, 1)), marker='o')
+
+for eta, current_data in data.items():
+    current_approach = current_data['approach']
+    current_d_lambda = current_data['d_lambda']
+    ax_1.scatter(current_approach, current_d_lambda,
+                 40, np.tile(viridis(eta_dict[eta]), (100, 1)), marker='o')
+    ax_1.set_xscale('log')
+    ax_1.set_yscale('log')
+
+figure_1.show()
 figure_1.savefig('figure_1.svg')
 
 figure_2, ax_2 = plt.subplots()
 ax_2.set_xlabel(r'$\left(\sigma_{c}-\sigma\right)/\sigma_{c}$')
 ax_2.set_ylabel(r'$\left|\alpha_{c}\right|/N$')
-for eta in d_lambda:
-    current_approach = approach_long[eta]
-    current_d_lambda = d_lambda_long[eta]
+
+for eta, current_data in data.items():
+    current_approach = current_data['approach']
+    current_d_lambda = current_data['d_lambda']
     ax_2.scatter(current_approach, current_d_lambda,
-                 9, np.tile(np.log10(float(eta)), (100, 1)))
+                 9, np.tile(viridis(eta_dict[eta]), (100, 1)))
 figure_2.savefig('figure_2.svg')
 
 figure_3, ax_3 = plt.subplots()
-etas = list(fits.keys())
-fitted_polynomials = list(fits.values())
-ax_3.scatter(etas, [x[0] for x in fitted_polynomials], 36, np.log10([float(eta) for eta in etas]))
-ax_3.set_xlabel(r'\eta')
-ax_3.set_ylabel(r'\gamma - Exponent in critical approach')
+etas = []
+fits = []
+for eta, current_data in data.items():
+    fitted_polynomial = current_data['fit']
+    etas.append(eta)
+    fits.append(fitted_polynomial)
+ax_3.scatter([float(eta) for eta in etas], [x[0] for x in fits], 36, [viridis(eta_dict[eta]) for eta in etas])
+ax_3.set_xlabel(r'$\eta$')
+ax_3.set_ylabel(r'$\gamma - Exponent in critical approach$')
 figure_3.savefig('figure_3.svg')
 
 
@@ -70,12 +76,6 @@ ax_5.set_ylabel(r'$x_{c}$')
 c = plt.colorbar(series, ax=ax_5)
 c.set_label(r'$\log \eta$')
 figure_5.savefig('figure_5.svg')
-
-figure_6, ax_6 = plt.subplots()
-ax_6.loglog(crit_data[:, 1], crit_data[:, 2])
-ax_6.set_xlabel(r'$\lambda_{c}$')
-ax_6.set_ylabel(r'$x_{c}$')
-figure_6.savefig('figure_6.svg')
 
 plt.show()
 print('Done')
