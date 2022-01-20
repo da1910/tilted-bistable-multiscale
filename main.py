@@ -40,7 +40,7 @@ for eta in etas:
     beta = beta_initial
     lend = scipy.optimize.broyden1(lambda x: left_end_function(x, lambda_, eta), [0])[0]
 
-    print('Starting at lambda = {}, x = {}'.format(lambda_initial, lend))
+    print(f'Starting at lambda = {lambda_initial}, x = {lend}')
     print('Executing AUTO-07p...')
     create_output_file(os.path.join(template_dir, 'raw.f90'),
                        os.path.join(temp_dir, 'hompdf.f90'),
@@ -90,8 +90,8 @@ for eta in etas:
         d_lmbda = abs(b1_int[:, 0] - b2_int[:, 0])
         d_lmbda_long = abs(b1_int_long[:, 0] - b2_int_long[:, 0])
 
-
         results[eta] = {}
+        results[eta]['raw'] = np.vstack([b1, b2]).tolist()
         results[eta]['approach'] = approach.tolist()
         results[eta]['d_lambda'] = d_lmbda.tolist()
         results[eta]['approach_long'] = approach_long.tolist()
@@ -109,7 +109,7 @@ for eta in etas:
     else:
         print('No cusp found, skipping...\n')
 
-    print("Dumping raw output from AUTO to '{}'...\n".format(auto_output_dir))
+    print(f"Dumping raw output from AUTO to '{auto_output_dir}'...\n")
     os.remove(os.path.join(temp_dir, 'hompdf.f90'))
     escaped_folder_name = str(round(eta, 4)).replace('.', '_')
     os.mkdir(os.path.join(auto_output_dir, escaped_folder_name))
@@ -122,4 +122,3 @@ with open(os.path.join(processed_output_dir, 'results.json'), 'w', encoding='utf
 
 with open(os.path.join(processed_output_dir, 'crit_data.json'), 'w', encoding='utf8') as fp:
     json.dump(critical_approach_data.tolist(), fp)
-
