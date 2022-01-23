@@ -3,9 +3,11 @@ import numpy as np
 from functools import reduce
 
 
-def create_output_file(source_filename: str, destination_filename: str, replacements: Dict[str, str]) -> None:
-    with open(source_filename, 'r', encoding='utf8') as f_in:
-        with open(destination_filename, 'w', encoding='utf8') as f_out:
+def create_output_file(
+    source_filename: str, destination_filename: str, replacements: Dict[str, str]
+) -> None:
+    with open(source_filename, "r", encoding="utf8") as f_in:
+        with open(destination_filename, "w", encoding="utf8") as f_out:
             for line in f_in.readlines():
                 line = reduce(lambda a, kv: a.replace(*kv), replacements.items(), line)
                 f_out.write(line)
@@ -42,7 +44,7 @@ def bisect_left_naive(x_vector, x_target) -> int:
         split_index = len(x_vector_inner) // 2
         split_value = x_vector_inner[split_index]
         if split_value > target:
-            return bisect_interval(x_vector_inner[0:split_index + 1], target)
+            return bisect_interval(x_vector_inner[0 : split_index + 1], target)
         elif split_value == target:
             return split_index
         else:
@@ -58,11 +60,11 @@ def bisect_left_naive(x_vector, x_target) -> int:
 
 
 def to_fortran_string(number: float) -> str:
-    return '{:.3e}'.format(number).replace('e', 'D')
+    return "{:.3e}".format(number).replace("e", "D")
 
 
 def process_input(filename: str) -> np.ndarray:
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         data_blocks = []
         flag = False
         block_index = 0
@@ -73,7 +75,9 @@ def process_input(filename: str) -> np.ndarray:
                 if len(data_blocks) <= block_index:
                     data_blocks.append(np.array(line_contents))
                 else:
-                    data_blocks[block_index] = np.vstack((data_blocks[block_index], line_contents))
+                    data_blocks[block_index] = np.vstack(
+                        (data_blocks[block_index], line_contents)
+                    )
             else:
                 if flag:
                     block_index = block_index + 1
