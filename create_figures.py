@@ -13,8 +13,8 @@ import json
 
 
 def generate_figure_one(axis: matplotlib.axes.Axes, data: Dict, eta_dict: Dict) -> None:
-    axis.set_xlabel(r"$\log\left(\sigma_{c}-\sigma\right)/\sigma_{c}$")
-    axis.set_ylabel(r"$\log\left|\alpha_{c}\right|/N$")
+    axis.set_xlabel(r"$\left(\sigma_{c}-\sigma\right)/\sigma_{c}$")
+    axis.set_ylabel(r"$\left|\alpha_{c}\right|/N$")
 
     for eta, current_data in data.items():
         current_approach = current_data['approach']
@@ -35,18 +35,24 @@ def generate_figure_two(axis: matplotlib.axes.Axes, data: Dict, eta_dict: Dict) 
         axis.scatter(current_approach, current_d_lambda,
                      9, np.tile(viridis(eta_dict[eta]), (100, 1)))
 
+    inset_axis = plt.axes([0, 0, 1, 1])
+    # Manually set the position and relative size of the inset axes within ax1
+    ip = InsetPosition(axis, [0.15, 0.6, 0.4, 0.3])
+    inset_axis.set_axes_locator(ip)
+    generate_figure_one(inset_axis, data, eta_dict)
+
 
 def generate_figure_three(axis: matplotlib.axes.Axes, etas: List[float], fits: List[Tuple[float, float]], eta_dict: Dict) -> None:
     axis.scatter([float(eta) for eta in etas], [x[0] for x in fits], 36, [viridis(eta_dict[eta]) for eta in etas])
     axis.set_ylim(bottom=1.2, top=1.8)
     axis.set_xlabel(r'$\eta$')
-    axis.set_ylabel(r'$\gamma - Exponent in critical approach$')
+    axis.set_ylabel(r'$\gamma$ - Exponent in critical approach')
 
 
 def generate_figure_four(axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray) -> None:
     axis.scatter([float(eta) for eta in etas], np.divide(1., crit_data[:, 2]), 25)
     axis.set_xlabel(r'$\eta$')
-    axis.set_ylabel(r'$\sigma_{c} - Critical \sigma value$')
+    axis.set_ylabel(r'$\sigma_{c}$ - Critical $\sigma$ value')
 
 
 def generate_figure_five(axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray) -> None:
@@ -144,7 +150,7 @@ figure_1.show()
 figure_1.savefig('figure_1.svg')
 
 figure_2, ax_2 = plt.subplots()
-generate_figure_one(ax_2, data, eta_dict)
+generate_figure_two(ax_2, data, eta_dict)
 figure_2.savefig('figure_2.svg')
 
 figure_3, ax_3 = plt.subplots()
