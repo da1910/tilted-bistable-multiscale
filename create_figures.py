@@ -108,6 +108,7 @@ def generate_figure_six(
     ax01.set_xlabel(r"$\sigma$")
     ax01.set_ylabel(r"$x$")
     ax01.set_xlim([0.05, 0.25])
+    ax01.set_xticks(np.linspace(0.05, 0.25, 5))
     ax01.set_ylim([-0.6, 0])
 
     ax10.set_xlabel(r"$x$")
