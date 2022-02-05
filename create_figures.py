@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib import colors
 from mpl_toolkits import mplot3d
-from mpl_toolkits.axes_grid.inset_locator import inset_axes, InsetPosition, mark_inset
 import os
 import json
 
@@ -43,11 +42,7 @@ def generate_figure_two(axis: matplotlib.axes.Axes, data: Dict, eta_dict: Dict) 
             9,
             np.tile(viridis(eta_dict[eta]), (100, 1)),
         )
-
-    inset_axis = plt.axes([0, 0, 1, 1])
-    # Manually set the position and relative size of the inset axes within ax1
-    ip = InsetPosition(axis, [0.15, 0.6, 0.4, 0.3])
-    inset_axis.set_axes_locator(ip)
+    inset_axis = axis.inset_axes([0.15, 0.6, 0.4, 0.3])
     generate_figure_one(inset_axis, data, eta_dict)
 
 
