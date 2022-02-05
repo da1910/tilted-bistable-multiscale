@@ -1,3 +1,2 @@
-/processed_output/
-/raw_output/
 /venv/
+**/scratch.py
