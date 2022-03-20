@@ -35,8 +35,8 @@ def generate_snapshot(beta: float, eta: float):
     }
 
 
-etas = [0.01]
-betas = [40, 7.8, 1]
+etas = [0.1]
+betas = [40, 7.6, 1]
 results = []
 os.chdir('./auto_working_dir')
 for eta in etas:
