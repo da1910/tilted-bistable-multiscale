@@ -24,8 +24,8 @@ def generate_snapshot(beta: float, eta: float):
 
     runner = ra.runAUTO()
     lpa = ac.load('hompdf', runner=runner)
-    b1 = lpa.run(PAR={1: lambda_, 2: beta}, DS='-', U={1: 2.0})
-    b2 = lpa.run(PAR={1: lambda_, 2: beta}, DS='-', U={1: -2.0})
+    b1 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: 2.0})
+    b2 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: -2.0})
 
     return {
         "eta": eta,
@@ -34,7 +34,8 @@ def generate_snapshot(beta: float, eta: float):
         "b2": b2.toArray(),
     }
 
-etas = [0.1]
+
+etas = [0.01]
 betas = [40, 7.8, 1]
 results = []
 os.chdir('./auto_working_dir')
