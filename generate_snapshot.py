@@ -3,6 +3,9 @@ import os
 import sys
 import datetime
 
+from scipy import optimize
+from scipy.special import i1, i0
+
 sys.path.append('/home/ubuntu/auto/07p/python')
 from auto import runAUTO as ra
 from auto import interactiveBindings as ib
@@ -12,8 +15,8 @@ from auto import AUTOCommands as ac
 from util import *
 
 
-def left_end_function(x: float, a1: float, a2: float) -> float:
-    return x ** 3 - a1 * x + a2
+def left_end_function(x: float, a1: float, a2: float, a3: float) -> float:
+    return x ** 3 - (a1 + i1((a2 * x ** 2) / 2) / i0((a2 * x ** 2) / 2)) * x + a3
 
 
 def generate_snapshot(beta: float, eta: float):
@@ -24,8 +27,10 @@ def generate_snapshot(beta: float, eta: float):
 
     runner = ra.runAUTO()
     lpa = ac.load('hompdf', runner=runner)
-    b1 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: 2.0})
-    b2 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: -2.0})
+    rend_upper = optimize.broyden1(lambda x: left_end_function(x, lambda_, beta, eta), [2.0])[0]
+    rend_lower = optimize.broyden1(lambda x: left_end_function(x, lambda_, beta, eta), [-2.0])[0]
+    b1 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: rend_upper})
+    b2 = lpa.run(PAR={1: lambda_, 2: beta, 3: eta}, DS='-', U={1: rend_lower})
 
     return {
         "eta": eta,
