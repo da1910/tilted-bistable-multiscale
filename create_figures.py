@@ -1,4 +1,5 @@
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Union
+import operator
 
 import matplotlib.axes
 import matplotlib.figure
@@ -74,7 +75,7 @@ def generate_figure_four(
 def generate_figure_five(
     axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
 ) -> None:
-    series = ax_5.scatter(
+    series = axis.scatter(
         crit_data[:, 0], crit_data[:, 1], 36, np.log10([float(eta) for eta in etas])
     )
     axis.set_xlabel(r"$\lambda_{c}$")
@@ -138,6 +139,79 @@ def generate_figure_six(
         )
 
 
+def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, crit_data) -> None:
+    fig.set_tight_layout(True)
+
+    ax00 = fig.add_subplot(2, 2, 1)
+    ax01 = fig.add_subplot(2, 2, 2)
+    ax10 = fig.add_subplot(2, 2, 3)
+
+    ax00.set_xlabel(r"$\lambda$")
+    ax00.set_ylabel(r"$x$")
+    ax00.set_xlim([-2, 2])
+    ax00.set_ylim([-2, 2])
+
+    ax01.set_xlabel(r"$\lambda$")
+    ax01.set_ylabel(r"$x$")
+    ax01.set_xlim([-2, 2])
+    ax01.set_ylim([-2, 2])
+
+    ax10.set_xlabel(r"$\lambda$")
+    ax10.set_ylabel(r"$x$")
+    ax10.set_xlim([-2, 2])
+    ax10.set_ylim([-2, 2])
+
+    snapshot.sort(key=operator.itemgetter("beta"), reverse=True)
+    axs = [ax00, ax01, ax10]
+
+    for index, ax in enumerate(axs):
+        data = snapshot[index]
+        plot_snapshot(ax, data)
+
+
+def plot_snapshot(ax: matplotlib.axes.Axes, data: Dict):
+    b1x = np.array([row[0] for row in data["b1"]], dtype=float)
+    b1y = np.array([row[2] for row in data["b1"]], dtype=float)
+    db1 = np.gradient(b1y, b1x) > 0
+    b2x = np.array([row[0] for row in data["b2"]], dtype=float)
+    b2y = np.array([row[2] for row in data["b2"]], dtype=float)
+    db2 = np.gradient(b2y, b2x) > 0
+    b1_chunks = split_array_on_sign(b1x, b1y, db1)
+    b2_chunks = split_array_on_sign(b2x, b2y, db2)
+
+    for chunk in b1_chunks:
+        color = "black"
+        if not chunk["sign"]:
+            line_style = "--"
+        else:
+            line_style = "-"
+        ax.plot(chunk["data"][:, 0], chunk["data"][:, 1], color=color, linestyle=line_style)
+
+    for chunk in b2_chunks:
+        color = "black"
+        if chunk["sign"]:
+            line_style = "--"
+        else:
+            line_style = "-"
+        ax.plot(chunk["data"][:, 0], chunk["data"][:, 1], color=color, linestyle=line_style)
+
+
+def split_array_on_sign(xdata: np.ndarray, ydata: np.ndarray, flags: np.ndarray) -> List[Dict[str, Union[float, np.ndarray]]]:
+    output = []
+    current_chunk = []
+    current_sign = None
+    for xval, yval, sign in zip(xdata, ydata, flags):
+        if current_sign is None:
+            current_sign = sign
+        current_chunk.append([xval, yval])
+        if sign != current_sign:
+            output.append({"sign": current_sign, "data": np.array(current_chunk, dtype=float)})
+            current_sign = sign
+            current_chunk = [[xval, yval]]
+    output.append({"sign": current_sign, "data": np.array(current_chunk, dtype=float)})
+    return output
+
+
 def compute_critical_approach_fit(
     data: Dict,
 ) -> Tuple[List[float], List[Tuple[float, float]]]:
@@ -153,7 +227,11 @@ def compute_critical_approach_fit(
 input_files = os.listdir("./processed_output")
 sorted_files = sorted(input_files, reverse=True)
 selected_data = f"./processed_output/{sorted_files[0]}"
+processed_data = f"./raw_output/200322-213107"
 viridis = cm.get_cmap("viridis")
+
+with open(os.path.join(processed_data, "snapshots.json"), encoding="utf8") as f:
+    snapshots = json.load(f)
 
 with open(os.path.join(selected_data, "extra_data.json"), encoding="utf8") as f:
     data = json.load(f)
@@ -170,7 +248,7 @@ for k, v in eta_dict.items():
 
 etas, fits = compute_critical_approach_fit(data)
 
-
+"""
 figure_1, ax_1 = plt.subplots()
 generate_figure_one(ax_1, data, eta_dict)
 figure_1.show()
@@ -195,6 +273,12 @@ figure_5.savefig("figure_5.svg")
 figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
 generate_figure_six(figure_6, etas, data)
 figure_6.savefig("figure_6.svg")
+"""
+
+figure_7 = plt.figure(figsize=plt.figaspect(1), dpi=100)
+generate_figure_seven(figure_7, snapshots, crit_data)
+figure_7.savefig("figure_7.svg")
+
 
 plt.show()
 print("Done")
