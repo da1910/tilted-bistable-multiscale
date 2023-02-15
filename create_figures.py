@@ -139,12 +139,12 @@ def generate_figure_six(
         )
 
 
-def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, crit_data) -> None:
+def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, cusp_data: List) -> None:
     fig.set_tight_layout(True)
 
-    ax00 = fig.add_subplot(2, 2, 1)
-    ax01 = fig.add_subplot(2, 2, 2)
-    ax10 = fig.add_subplot(2, 2, 3)
+    ax00 = fig.add_subplot(1, 3, 1)
+    ax01 = fig.add_subplot(1, 3, 2)
+    ax10 = fig.add_subplot(1, 3, 3)
 
     ax00.set_xlabel(r"$\lambda$")
     ax00.set_ylabel(r"$x$")
@@ -226,17 +226,24 @@ def compute_critical_approach_fit(
 
 input_files = os.listdir("./processed_output")
 sorted_files = sorted(input_files, reverse=True)
-selected_data = f"./processed_output/{sorted_files[0]}"
-processed_data = f"./raw_output/200322-213107"
+main_data = f"./processed_output/{sorted_files[0]}"
+
+input_files = os.listdir("./raw_output")
+sorted_files = sorted(input_files, reverse=True)
+snapshot_data = f"./raw_output/{sorted_files[0]}"
+
 viridis = cm.get_cmap("viridis")
 
-with open(os.path.join(processed_data, "snapshots.json"), encoding="utf8") as f:
+with open(os.path.join(snapshot_data, "snapshots.json"), encoding="utf8") as f:
     snapshots = json.load(f)
 
-with open(os.path.join(selected_data, "extra_data.json"), encoding="utf8") as f:
+with open(os.path.join(snapshot_data, "cusp.json"), encoding="utf8") as f:
+    cusp = json.load(f)
+
+with open(os.path.join(main_data, "results.json"), encoding="utf8") as f:
     data = json.load(f)
 
-with open(os.path.join(selected_data, "crit_data.json"), encoding="utf8") as f:
+with open(os.path.join(main_data, "crit_data.json"), encoding="utf8") as f:
     crit_data = np.array(json.load(f))
 
 eta_dict = {value: np.log10(float(value)) for value in data.keys()}
@@ -248,35 +255,34 @@ for k, v in eta_dict.items():
 
 etas, fits = compute_critical_approach_fit(data)
 
-"""
-figure_1, ax_1 = plt.subplots()
-generate_figure_one(ax_1, data, eta_dict)
-figure_1.show()
-figure_1.savefig("figure_1.svg")
 
-figure_2, ax_2 = plt.subplots()
-generate_figure_two(ax_2, data, eta_dict)
-figure_2.savefig("figure_2.svg")
+# figure_1, ax_1 = plt.subplots()
+# generate_figure_one(ax_1, data, eta_dict)
+# figure_1.show()
+# figure_1.savefig("figure_1.svg")
+#
+# figure_2, ax_2 = plt.subplots()
+# generate_figure_two(ax_2, data, eta_dict)
+# figure_2.savefig("figure_2.svg")
+#
+# figure_3, ax_3 = plt.subplots()
+# generate_figure_three(ax_3, etas, fits, eta_dict)
+# figure_3.savefig("figure_3.svg")
+#
+# figure_4, ax_4 = plt.subplots()
+# generate_figure_four(ax_4, etas, crit_data)
+# figure_4.savefig("figure_4.svg")
+#
+# figure_5, ax_5 = plt.subplots()
+# generate_figure_five(ax_5, etas, crit_data)
+# figure_5.savefig("figure_5.svg")
+#
+# figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
+# generate_figure_six(figure_6, etas, data)
+# figure_6.savefig("figure_6.svg")
 
-figure_3, ax_3 = plt.subplots()
-generate_figure_three(ax_3, etas, fits, eta_dict)
-figure_3.savefig("figure_3.svg")
-
-figure_4, ax_4 = plt.subplots()
-generate_figure_four(ax_4, etas, crit_data)
-figure_4.savefig("figure_4.svg")
-
-figure_5, ax_5 = plt.subplots()
-generate_figure_five(ax_5, etas, crit_data)
-figure_5.savefig("figure_5.svg")
-
-figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
-generate_figure_six(figure_6, etas, data)
-figure_6.savefig("figure_6.svg")
-"""
-
-figure_7 = plt.figure(figsize=plt.figaspect(1), dpi=100)
-generate_figure_seven(figure_7, snapshots, crit_data)
+figure_7 = plt.figure(figsize=plt.figaspect(0.4), dpi=100)
+generate_figure_seven(figure_7, snapshots, cusp)
 figure_7.savefig("figure_7.svg")
 
 

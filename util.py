@@ -84,3 +84,6 @@ def process_input(filename: str) -> np.ndarray:
                     flag = False
     data_blocks[0] = data_blocks[0][-1:1:-1]
     return np.vstack(data_blocks)
+
+def generate_arguments(lmbda: float, beta: float, eta: float, x0: float):
+    return {"PAR": (("lambda", lmbda), ("beta", beta), ("epsil", eta)), "U": (("x", x0),)}, {}
