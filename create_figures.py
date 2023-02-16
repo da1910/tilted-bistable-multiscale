@@ -7,7 +7,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib import colors
-from mpl_toolkits import mplot3d
 import os
 import json
 
@@ -167,6 +166,47 @@ def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, cusp_da
     for index, ax in enumerate(axs):
         data = snapshot[index]
         plot_snapshot(ax, data)
+        ax.set_aspect('equal')
+
+def plot_pdf(ax: matplotlib.axes.Axes, run: Dict):
+    n_samples = sum(run["counts"])
+    normalized_data = [val / n_samples for val in run["counts"]]
+    max_density = max(normalized_data)
+    ax.stairs(normalized_data, run["bin_edges"])
+    title = f"$\lambda={run['alpha']}$"
+    ax.set_title(title)
+    ax.set_xlim(-1.6, 1.6)
+    ax.set_ylim(0, 1.2*max_density)
+
+def generate_figure_eight(fig: matplotlib.figure.Figure, pdf_data: Dict) -> None:
+    fig.set_tight_layout(True)
+
+    ax00 = fig.add_subplot(1, 3, 1)
+    ax01 = fig.add_subplot(1, 3, 2)
+    ax10 = fig.add_subplot(1, 3, 3)
+
+    ax00.set_xlabel(r"$\lambda$")
+    ax00.set_ylabel(r"$x$")
+    ax00.set_xlim([-2, 2])
+    ax00.set_ylim([-2, 2])
+
+    ax01.set_xlabel(r"$\lambda$")
+    ax01.set_ylabel(r"$x$")
+    ax01.set_xlim([-2, 2])
+    ax01.set_ylim([-2, 2])
+
+    ax10.set_xlabel(r"$\lambda$")
+    ax10.set_ylabel(r"$x$")
+    ax10.set_xlim([-2, 2])
+    ax10.set_ylim([-2, 2])
+
+    tilted_data = [run for run in pdf_data if run["eta"] > 0]
+    tilted_data.sort(key=operator.itemgetter("alpha"))
+    axs = [ax00, ax01, ax10]
+
+    for index, ax in enumerate(axs):
+        data = tilted_data[index]
+        plot_pdf(ax, data)
 
 
 def plot_snapshot(ax: matplotlib.axes.Axes, data: Dict):
@@ -236,15 +276,18 @@ viridis = cm.get_cmap("viridis")
 
 with open(os.path.join(snapshot_data, "snapshots.json"), encoding="utf8") as f:
     snapshots = json.load(f)
-
+"""
 with open(os.path.join(snapshot_data, "cusp.json"), encoding="utf8") as f:
     cusp = json.load(f)
-
+"""
 with open(os.path.join(main_data, "results.json"), encoding="utf8") as f:
     data = json.load(f)
 
 with open(os.path.join(main_data, "crit_data.json"), encoding="utf8") as f:
     crit_data = np.array(json.load(f))
+
+with open("./pdf_data.json", encoding="utf8") as f:
+    pdf_data = json.load(f)
 
 eta_dict = {value: np.log10(float(value)) for value in data.keys()}
 min_eta = min(eta_dict.values())
@@ -255,36 +298,41 @@ for k, v in eta_dict.items():
 
 etas, fits = compute_critical_approach_fit(data)
 
+"""
+figure_1, ax_1 = plt.subplots()
+generate_figure_one(ax_1, data, eta_dict)
+figure_1.show()
+figure_1.savefig("figure_1.svg")
 
-# figure_1, ax_1 = plt.subplots()
-# generate_figure_one(ax_1, data, eta_dict)
-# figure_1.show()
-# figure_1.savefig("figure_1.svg")
-#
-# figure_2, ax_2 = plt.subplots()
-# generate_figure_two(ax_2, data, eta_dict)
-# figure_2.savefig("figure_2.svg")
-#
-# figure_3, ax_3 = plt.subplots()
-# generate_figure_three(ax_3, etas, fits, eta_dict)
-# figure_3.savefig("figure_3.svg")
-#
-# figure_4, ax_4 = plt.subplots()
-# generate_figure_four(ax_4, etas, crit_data)
-# figure_4.savefig("figure_4.svg")
-#
-# figure_5, ax_5 = plt.subplots()
-# generate_figure_five(ax_5, etas, crit_data)
-# figure_5.savefig("figure_5.svg")
-#
-# figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
-# generate_figure_six(figure_6, etas, data)
-# figure_6.savefig("figure_6.svg")
+figure_2, ax_2 = plt.subplots()
+generate_figure_two(ax_2, data, eta_dict)
+figure_2.savefig("figure_2.svg")
 
-figure_7 = plt.figure(figsize=plt.figaspect(0.4), dpi=100)
-generate_figure_seven(figure_7, snapshots, cusp)
+figure_3, ax_3 = plt.subplots()
+generate_figure_three(ax_3, etas, fits, eta_dict)
+figure_3.savefig("figure_3.svg")
+
+figure_4, ax_4 = plt.subplots()
+generate_figure_four(ax_4, etas, crit_data)
+figure_4.savefig("figure_4.svg")
+
+figure_5, ax_5 = plt.subplots()
+generate_figure_five(ax_5, etas, crit_data)
+figure_5.savefig("figure_5.svg")
+
+figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
+generate_figure_six(figure_6, etas, data)
+figure_6.savefig("figure_6.svg")
+
+
+figure_7 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
+generate_figure_seven(figure_7, snapshots, crit_data)
 figure_7.savefig("figure_7.svg")
+"""
 
+figure_8 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
+generate_figure_eight(figure_8, pdf_data)
+figure_8.savefig("figure_8.svg")
 
 plt.show()
 print("Done")

@@ -41,17 +41,17 @@ def get_distributions(run_id: int, noise_prefactor: float, dfx: Callable):
 run_data = [
     {
         "alpha": -1.0,
-        "beta": 10.,
+        "beta": 20.,
         "eta": 0.1
     },
     {
         "alpha": 1.0,
-        "beta": 10.,
+        "beta": 20.,
         "eta": 0.1
     },
     {
-        "alpha": -0.4,
-        "beta": 10.,
+        "alpha": -0.8,
+        "beta": 20.,
         "eta": 0.1
     },
     {
@@ -60,7 +60,7 @@ run_data = [
         "eta": 0.0
     },
     {
-        "alpha": -1.0,
+        "alpha": 1.0,
         "beta": 4.,
         "eta": 0.0
     },
@@ -97,5 +97,5 @@ for setup in run_data:
     output["counts"] = data.tolist()
     output_data.append(output)
 
-with open("./pdf_data.json", "w", encoding="utf8") as fp:
+with open("./pdf_data_16.json", "w", encoding="utf8") as fp:
     json.dump(output_data, fp)
