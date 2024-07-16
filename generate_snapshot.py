@@ -76,8 +76,8 @@ def generate_cusp_diagram():
     }
 
 
-etas = [0.1]
-betas = [40, 7.6, 1]
+etas = [0, 0.1]
+betas = [40, 10, 7.6, 4.0, 1]
 results = []
 os.chdir('./auto_working_dir')
 for eta in etas:
