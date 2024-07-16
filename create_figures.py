@@ -1,13 +1,12 @@
-from typing import Dict, Tuple, List, Union
-import operator
+from typing import Dict, Tuple, List, Union, Iterable
 
 import matplotlib.axes
 import matplotlib.figure
 import numpy as np
+import scipy as sp
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib import colors
-from mpl_toolkits import mplot3d
 import os
 import json
 
@@ -139,12 +138,12 @@ def generate_figure_six(
         )
 
 
-def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, crit_data) -> None:
-    fig.set_tight_layout(True)
+def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List) -> None:
+    fig.set_layout_engine("tight")
 
-    ax00 = fig.add_subplot(2, 2, 1)
-    ax01 = fig.add_subplot(2, 2, 2)
-    ax10 = fig.add_subplot(2, 2, 3)
+    ax00 = fig.add_subplot(1, 3, 1)
+    ax01 = fig.add_subplot(1, 3, 2)
+    ax10 = fig.add_subplot(1, 3, 3)
 
     ax00.set_xlabel(r"$\lambda$")
     ax00.set_ylabel(r"$x$")
@@ -161,13 +160,98 @@ def generate_figure_seven(fig: matplotlib.figure.Figure, snapshot: List, crit_da
     ax10.set_xlim([-2, 2])
     ax10.set_ylim([-2, 2])
 
-    snapshot.sort(key=operator.itemgetter("beta"), reverse=True)
+    axs = [ax00, ax01, ax10]
+
+    relevant_snapshots = [item for item in snapshot if item["eta"] > 0]
+    betas = [40.0, 7.6, 1.0]
+    sorted_data = []
+
+    for beta in betas:
+        sorted_data.append(next(item for item in relevant_snapshots if item["beta"] == beta))
+
+    for index, ax in enumerate(axs):
+        current_item = sorted_data[index]
+        plot_snapshot(ax, current_item)
+        ax.set_aspect('equal')
+
+def plot_pdf(ax: matplotlib.axes.Axes, runs: Iterable[Dict]):
+    bin_widths = {item["bin_widths"] for item in runs}
+    sorted_bin_widths = sorted(bin_widths)
+
+    for bin_width in sorted_bin_widths:
+        pdf_data = next(run for run in runs if run["bin_widths"] == bin_width)
+        n_samples = sum(pdf_data["counts"])
+        bin_widths = np.array([x - y for x, y in zip(pdf_data["bin_edges"][1:], pdf_data["bin_edges"][:-1])])
+        normalized_data = np.array(pdf_data["counts"]) / (n_samples * bin_widths)
+        bin_centres = np.array([(x + y) / 2. for x, y in zip(pdf_data["bin_edges"][1:], pdf_data["bin_edges"][:-1])])
+        ax.plot(bin_centres, normalized_data, label="Simulated PDF")
+
+    ax.set_xlim(-2.0, 2.0)
+    ax.set_ylim(0, 3)
+
+def plot_homogenized_pdf(ax: matplotlib.axes.Axes, alpha: float, beta: float, eta: float):
+    x_vals = np.linspace(-10, 10, 4001)
+    i_0 = sp.special.i0(beta * x_vals ** 2 / 2)
+    y_vals = np.exp(-beta*(x_vals ** 4 / 4 - (alpha * x_vals ** 2 / 2) + x_vals * eta)) * i_0
+
+    area = np.trapz(y_vals, x_vals)
+
+    ax.plot(x_vals, y_vals / area, linestyle=(0, (0.8, 0.8)), color="green", label="Homogenized PDF")
+
+def generate_figure_eight(fig: matplotlib.figure.Figure, relevant_snapshot: Dict, pdf_data: Dict) -> None:
+    fig.set_layout_engine(layout="tight")
+    fig.set_size_inches(12, 5)
+    gs = fig.add_gridspec(2, 3, height_ratios=[2, 1])
+
+    ax_top = fig.add_subplot(gs[0, :])
+    ax_top.set_aspect(0.5)
+    plot_snapshot(ax_top, relevant_snapshot)
+    ax_top.set_xlabel(r"$\lambda$")
+    ax_top.set_ylabel(r"$x$")
+
+    ax00 = fig.add_subplot(gs[1, 0])
+    ax01 = fig.add_subplot(gs[1, 1])
+    ax10 = fig.add_subplot(gs[1, 2])
+
+    ax00.set_xlabel(r"$x$")
+    ax00.set_ylabel(r"$f\left(x\right)$")
+    ax00.set_xlim([-2, 2])
+    ax00.set_ylim([-2, 2])
+
+    ax01.set_xlabel(r"$x$")
+    ax01.set_ylabel(r"$f\left(x\right)$")
+    ax01.set_xlim([-2, 2])
+    ax01.set_ylim([-2, 2])
+
+    ax10.set_xlabel(r"$x$")
+    ax10.set_ylabel(r"$f\left(x\right)$")
+    ax10.set_xlim([-2, 2])
+    ax10.set_ylim([-2, 2])
+
+    tilted_data = [run for run in pdf_data if run["eta"] > 0]
+    alphas = {value["alpha"] for value in tilted_data}
+    sorted_alphas = sorted(alphas)
     axs = [ax00, ax01, ax10]
 
     for index, ax in enumerate(axs):
-        data = snapshot[index]
-        plot_snapshot(ax, data)
+        current_data = [results for results in tilted_data if results["alpha"] == sorted_alphas[index]]
+        plot_pdf(ax, current_data)
+        alpha = current_data[0]["alpha"]
+        beta = current_data[0]["beta"]
+        eta = current_data[0]["eta"]
+        plot_homogenized_pdf(ax, alpha, beta, eta)
+        ax_top.axvline(alpha, color="k", linestyle="-.")
 
+    lines, labels = axs[0].get_legend_handles_labels()
+    fig.legend(lines, labels, loc=(0.03, 0.4))
+
+    ax_top.annotate("a.", xy=(-0.7, 1.7))
+    ax_top.annotate("b.", xy=(-0.15, 1.7))
+    ax_top.annotate("c.", xy=(0.6, 1.7))
+
+    axs[0].annotate("a) $\lambda = -0.5$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[1].annotate("b) $\lambda = -0.25$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[2].annotate("c) $\lambda = 0.5$", xy=(0.5, 2.2), annotation_clip=False)
 
 def plot_snapshot(ax: matplotlib.axes.Axes, data: Dict):
     b1x = np.array([row[0] for row in data["b1"]], dtype=float)
@@ -226,18 +310,29 @@ def compute_critical_approach_fit(
 
 input_files = os.listdir("./processed_output")
 sorted_files = sorted(input_files, reverse=True)
-selected_data = f"./processed_output/{sorted_files[0]}"
-processed_data = f"./raw_output/200322-213107"
+main_data = f"./processed_output/{sorted_files[0]}"
+
+input_files = os.listdir("./raw_output")
+sorted_files = sorted(input_files, reverse=True)
+file_set = "130624-112003"
+snapshot_data = f"./raw_output/{file_set}"
+
 viridis = cm.get_cmap("viridis")
 
-with open(os.path.join(processed_data, "snapshots.json"), encoding="utf8") as f:
+with open(os.path.join(snapshot_data, "snapshots.json"), encoding="utf8") as f:
     snapshots = json.load(f)
 
-with open(os.path.join(selected_data, "extra_data.json"), encoding="utf8") as f:
+with open(os.path.join(snapshot_data, "cusp.json"), encoding="utf8") as f:
+    cusp = json.load(f)
+
+with open(os.path.join(main_data, "extra_data.json"), encoding="utf8") as f:
     data = json.load(f)
 
-with open(os.path.join(selected_data, "crit_data.json"), encoding="utf8") as f:
+with open(os.path.join(main_data, "crit_data.json"), encoding="utf8") as f:
     crit_data = np.array(json.load(f))
+
+with open("./pdf_data.json", encoding="utf8") as f:
+    pdf_data = json.load(f)
 
 eta_dict = {value: np.log10(float(value)) for value in data.keys()}
 min_eta = min(eta_dict.values())
@@ -248,7 +343,6 @@ for k, v in eta_dict.items():
 
 etas, fits = compute_critical_approach_fit(data)
 
-"""
 figure_1, ax_1 = plt.subplots()
 generate_figure_one(ax_1, data, eta_dict)
 figure_1.show()
@@ -273,12 +367,15 @@ figure_5.savefig("figure_5.svg")
 figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
 generate_figure_six(figure_6, etas, data)
 figure_6.savefig("figure_6.svg")
-"""
 
-figure_7 = plt.figure(figsize=plt.figaspect(1), dpi=100)
-generate_figure_seven(figure_7, snapshots, crit_data)
+figure_7 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
+generate_figure_seven(figure_7, snapshots)
 figure_7.savefig("figure_7.svg")
 
+figure_8 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
+pdf_snapshot = next(snapshot for snapshot in snapshots if snapshot["eta"] > 0 and snapshot["beta"] == 10)
+generate_figure_eight(figure_8, pdf_snapshot, pdf_data)
+figure_8.savefig("figure_8.svg")
 
 plt.show()
 print("Done")
