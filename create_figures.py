@@ -5,7 +5,7 @@ import matplotlib.figure
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-from matplotlib import cm
+from matplotlib import colormaps as cm
 from matplotlib import colors
 import os
 import json
@@ -229,6 +229,7 @@ def generate_figure_eight(fig: matplotlib.figure.Figure, relevant_snapshot: Dict
     ax10.set_ylim([-2, 2])
 
     tilted_data = [run for run in pdf_data if run["eta"] > 0]
+
     alphas = {value["alpha"] for value in tilted_data}
     sorted_alphas = sorted(alphas)
     axs = [ax00, ax01, ax10]
@@ -249,9 +250,69 @@ def generate_figure_eight(fig: matplotlib.figure.Figure, relevant_snapshot: Dict
     ax_top.annotate("b.", xy=(-0.15, 1.7))
     ax_top.annotate("c.", xy=(0.6, 1.7))
 
-    axs[0].annotate("a) $\lambda = -0.5$", xy=(0.5, 2.2), annotation_clip=False)
-    axs[1].annotate("b) $\lambda = -0.25$", xy=(0.5, 2.2), annotation_clip=False)
-    axs[2].annotate("c) $\lambda = 0.5$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[0].annotate(r"a) $\lambda = -0.5$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[1].annotate(r"b) $\lambda = -0.25$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[2].annotate(r"c) $\lambda = 0.5$", xy=(0.5, 2.2), annotation_clip=False)
+
+
+def generate_figure_eight_a(fig: matplotlib.figure.Figure, relevant_snapshot: Dict, pdf_data: Dict) -> None:
+    fig.set_layout_engine(layout="tight")
+    fig.set_size_inches(12, 5)
+    gs = fig.add_gridspec(2, 3, height_ratios=[2, 1])
+
+    ax_top = fig.add_subplot(gs[0, :])
+    ax_top.set_aspect(0.5)
+    plot_snapshot(ax_top, relevant_snapshot)
+
+    unstable_branch = [[-0.7, 0], [0, 0]]
+    ax_top.plot(*unstable_branch, color="black", linestyle="--", linewidth=2)
+    ax_top.set_xlabel(r"$\lambda$")
+    ax_top.set_ylabel(r"$x$")
+
+    ax00 = fig.add_subplot(gs[1, 0])
+    ax01 = fig.add_subplot(gs[1, 1])
+    ax10 = fig.add_subplot(gs[1, 2])
+
+    ax00.set_xlabel(r"$x$")
+    ax00.set_ylabel(r"$f\left(x\right)$")
+    ax00.set_xlim([-2, 2])
+    ax00.set_ylim([-2, 2])
+
+    ax01.set_xlabel(r"$x$")
+    ax01.set_ylabel(r"$f\left(x\right)$")
+    ax01.set_xlim([-2, 2])
+    ax01.set_ylim([-2, 2])
+
+    ax10.set_xlabel(r"$x$")
+    ax10.set_ylabel(r"$f\left(x\right)$")
+    ax10.set_xlim([-2, 2])
+    ax10.set_ylim([-2, 2])
+
+    tilted_data = [run for run in pdf_data if run["eta"] == 0]
+
+    alphas = {value["alpha"] for value in tilted_data}
+    sorted_alphas = sorted(alphas)
+    axs = [ax00, ax01, ax10]
+
+    for index, ax in enumerate(axs):
+        current_data = [results for results in tilted_data if results["alpha"] == sorted_alphas[index]]
+        plot_pdf(ax, current_data)
+        alpha = current_data[0]["alpha"]
+        beta = current_data[0]["beta"]
+        eta = current_data[0]["eta"]
+        plot_homogenized_pdf(ax, alpha, beta, eta)
+        ax_top.axvline(alpha, color="k", linestyle="-.")
+
+    lines, labels = axs[0].get_legend_handles_labels()
+    fig.legend(lines, labels, loc=(0.03, 0.4))
+
+    ax_top.annotate("a.", xy=(-0.47, 1.7))
+    ax_top.annotate("b.", xy=(-0.15, 1.7))
+    ax_top.annotate("c.", xy=(0.6, 1.7))
+
+    axs[0].annotate(r"a) $\lambda = -0.5$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[1].annotate(r"b) $\lambda = -0.25$", xy=(0.5, 2.2), annotation_clip=False)
+    axs[2].annotate(r"c) $\lambda = 0.5$", xy=(0, 2.2), annotation_clip=False)
 
 def plot_snapshot(ax: matplotlib.axes.Axes, data: Dict):
     b1x = np.array([row[0] for row in data["b1"]], dtype=float)
@@ -307,6 +368,9 @@ def compute_critical_approach_fit(
         fits.append(fitted_polynomial)
     return etas, fits
 
+plt.rcParams.update({
+    "text.usetex": True,
+})
 
 input_files = os.listdir("./processed_output")
 sorted_files = sorted(input_files, reverse=True)
@@ -376,6 +440,12 @@ figure_8 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
 pdf_snapshot = next(snapshot for snapshot in snapshots if snapshot["eta"] > 0 and snapshot["beta"] == 10)
 generate_figure_eight(figure_8, pdf_snapshot, pdf_data)
 figure_8.savefig("figure_8.svg")
+
+figure_8a = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
+pdf_snapshot = next(snapshot for snapshot in snapshots if snapshot["eta"] == 0 and snapshot["beta"] == 10)
+generate_figure_eight_a(figure_8a, pdf_snapshot, pdf_data)
+figure_8a.savefig("figure_8a.svg")
+
 
 plt.show()
 print("Done")
