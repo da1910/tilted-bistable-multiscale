@@ -1,7 +1,10 @@
 /venv/
+/linux/
 **/scratch.py
 *.9
 *.8
 *.7
 *.exe
 *.o
+*.iml
+/.idea/
