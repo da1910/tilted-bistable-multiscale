@@ -197,10 +197,10 @@ SUBROUTINE STPNT(NDIM,U,PAR,T)
   DOUBLE PRECISION, INTENT(IN) :: T
 
 ! Initialize the equation parameters
-  PAR(1:3) = (/ LAMBDAINPUT, BETAINPUT, ETAINPUT/)
+  PAR(1:3) = (/ 0.0, 0.0, 0.0/)
 
 ! Initialize the solution
-  U(1) = X0INPUT
+  U(1) = 0.0
    
 END SUBROUTINE STPNT
 
