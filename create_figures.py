@@ -58,7 +58,8 @@ def generate_figure_three(
         36,
         [viridis(eta_dict[eta]) for eta in etas],
     )
-    axis.set_ylim(bottom=1.2, top=1.8)
+    axis.set_xscale("log")
+    #axis.set_ylim(bottom=1.2, top=1.8)
     axis.set_xlabel(r"$\eta$")
     axis.set_ylabel(r"$\gamma$ - Exponent in critical approach")
 
@@ -194,7 +195,7 @@ def plot_homogenized_pdf(ax: matplotlib.axes.Axes, alpha: float, beta: float, et
     i_0 = sp.special.i0(beta * x_vals ** 2 / 2)
     y_vals = np.exp(-beta*(x_vals ** 4 / 4 - (alpha * x_vals ** 2 / 2) + x_vals * eta)) * i_0
 
-    area = np.trapz(y_vals, x_vals)
+    area = np.trapezoid(y_vals, x_vals)
 
     ax.plot(x_vals, y_vals / area, linestyle=(0, (0.8, 0.8)), color="green", label="Homogenized PDF")
 
@@ -262,10 +263,10 @@ def generate_figure_eight_a(fig: matplotlib.figure.Figure, relevant_snapshot: Di
 
     ax_top = fig.add_subplot(gs[0, :])
     ax_top.set_aspect(0.5)
-    plot_snapshot(ax_top, relevant_snapshot)
+    plot_snapshot_symmetric(ax_top, relevant_snapshot)
 
-    unstable_branch = [[-0.7, 0], [0, 0]]
-    ax_top.plot(*unstable_branch, color="black", linestyle="--", linewidth=2)
+    stable_branch = [[-1.0, 0], [0, 0]]
+    ax_top.plot(*stable_branch, color="black", linewidth=2)
     ax_top.set_xlabel(r"$\lambda$")
     ax_top.set_ylabel(r"$x$")
 
@@ -340,6 +341,33 @@ def plot_snapshot(ax: matplotlib.axes.Axes, data: Dict):
             line_style = "-"
         ax.plot(chunk["data"][:, 0], chunk["data"][:, 1], color=color, linestyle=line_style)
 
+def plot_snapshot_symmetric(ax: matplotlib.axes.Axes, data: Dict):
+    b1x = np.array([row[0] for row in data["b1"] if row[2] >= 0], dtype=float)
+    b1y = np.array([row[2] for row in data["b1"] if row[2] >= 0], dtype=float)
+    db1 = np.gradient(b1y, b1x) > 0
+
+    b2x = np.array([row[0] for row in data["b1"] if row[2] <= 0], dtype=float)
+    b2y = np.array([row[2] for row in data["b1"] if row[2] <= 0], dtype=float)
+    db2 = np.gradient(b2y, b2x) > 0
+
+    b1_chunks = split_array_on_sign(b1x, b1y, db1)
+    b2_chunks = split_array_on_sign(b2x, b2y, db2)
+
+    for chunk in b1_chunks:
+        color = "black"
+        if not chunk["sign"]:
+            line_style = "--"
+        else:
+            line_style = "-"
+        ax.plot(chunk["data"][:, 0], chunk["data"][:, 1], color=color, linestyle=line_style)
+
+    for chunk in b2_chunks:
+        color = "black"
+        if chunk["sign"]:
+            line_style = "--"
+        else:
+            line_style = "-"
+        ax.plot(chunk["data"][:, 0], chunk["data"][:, 1], color=color, linestyle=line_style)
 
 def split_array_on_sign(xdata: np.ndarray, ydata: np.ndarray, flags: np.ndarray) -> List[Dict[str, Union[float, np.ndarray]]]:
     output = []
@@ -389,13 +417,13 @@ with open(os.path.join(snapshot_data, "snapshots.json"), encoding="utf8") as f:
 with open(os.path.join(snapshot_data, "cusp.json"), encoding="utf8") as f:
     cusp = json.load(f)
 
-with open(os.path.join(main_data, "extra_data.json"), encoding="utf8") as f:
+with open(os.path.join(main_data, "results.json"), encoding="utf8") as f:
     data = json.load(f)
 
 with open(os.path.join(main_data, "crit_data.json"), encoding="utf8") as f:
     crit_data = np.array(json.load(f))
 
-with open("./pdf_data.json", encoding="utf8") as f:
+with open("pdf/pdf_data.json", encoding="utf8") as f:
     pdf_data = json.load(f)
 
 eta_dict = {value: np.log10(float(value)) for value in data.keys()}
@@ -410,42 +438,41 @@ etas, fits = compute_critical_approach_fit(data)
 figure_1, ax_1 = plt.subplots()
 generate_figure_one(ax_1, data, eta_dict)
 figure_1.show()
-figure_1.savefig("figure_1.svg")
+figure_1.savefig("figures/figure_1.svg")
 
 figure_2, ax_2 = plt.subplots()
 generate_figure_two(ax_2, data, eta_dict)
-figure_2.savefig("figure_2.svg")
+figure_2.savefig("figures/figure_2.svg")
 
 figure_3, ax_3 = plt.subplots()
 generate_figure_three(ax_3, etas, fits, eta_dict)
-figure_3.savefig("figure_3.svg")
+figure_3.savefig("figures/figure_3.svg")
 
 figure_4, ax_4 = plt.subplots()
 generate_figure_four(ax_4, etas, crit_data)
-figure_4.savefig("figure_4.svg")
+figure_4.savefig("figures/figure_4.svg")
 
 figure_5, ax_5 = plt.subplots()
 generate_figure_five(ax_5, etas, crit_data)
-figure_5.savefig("figure_5.svg")
+figure_5.savefig("figures/figure_5.svg")
 
 figure_6 = plt.figure(figsize=plt.figaspect(1), dpi=100)
 generate_figure_six(figure_6, etas, data)
-figure_6.savefig("figure_6.svg")
+figure_6.savefig("figures/figure_6.svg")
 
 figure_7 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
 generate_figure_seven(figure_7, snapshots)
-figure_7.savefig("figure_7.svg")
+figure_7.savefig("figures/figure_7.svg")
 
 figure_8 = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
 pdf_snapshot = next(snapshot for snapshot in snapshots if snapshot["eta"] > 0 and snapshot["beta"] == 10)
 generate_figure_eight(figure_8, pdf_snapshot, pdf_data)
-figure_8.savefig("figure_8.svg")
+figure_8.savefig("figures/figure_8.svg")
 
 figure_8a = plt.figure(figsize=plt.figaspect(0.333), dpi=100)
 pdf_snapshot = next(snapshot for snapshot in snapshots if snapshot["eta"] == 0 and snapshot["beta"] == 10)
 generate_figure_eight_a(figure_8a, pdf_snapshot, pdf_data)
-figure_8a.savefig("figure_8a.svg")
-
+figure_8a.savefig("figures/figure_8a.svg")
 
 plt.show()
 print("Done")

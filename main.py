@@ -29,7 +29,7 @@ def left_end_function(x: float, a1: float, a2: float) -> float:
 
 beta_initial = 20.0
 lambda_initial = -3.0
-etas = np.logspace(-3, -1, 21)
+etas = np.logspace(-4, -0.8, 33)
 lambda_ = lambda_initial
 critical_approach_data = np.empty((0, 4), float)
 
