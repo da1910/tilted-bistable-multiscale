@@ -15,6 +15,6 @@ for entry = result
 end
 
 data = jsonencode(jsonObjects);
-fid = fopen("pdf_data_matlab_40_wide.json", 'w');
+fid = fopen("pdf_data.json", 'w');
 fprintf(fid,'%s',data);
 fclose(fid);
