@@ -63,17 +63,9 @@ def generate_figure_three(
     axis.set_xlabel(r"$\eta$")
     axis.set_ylabel(r"$\gamma$ - Exponent in critical approach")
 
-
-def generate_figure_four(
-    axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
-) -> None:
-    axis.scatter([float(eta) for eta in etas], np.divide(1.0, crit_data[:, 2]), 25)
-    axis.set_xlabel(r"$\eta$")
-    axis.set_ylabel(r"$\sigma_{c}$ - Critical $\sigma$ value")
-
 def generate_figure_four_a(
     axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
-) -> None:
+) -> Tuple[float, float]:
     x = [float(eta) for eta in etas]
     y = np.subtract(0.25, np.divide(1.0, crit_data[:, 2]))
     log_x = np.log10(x)
@@ -86,11 +78,28 @@ def generate_figure_four_a(
     axis.scatter(log_x, log_y, 25)
 
     axis.plot(fit_x, fit_y, color="black")
-    axis.annotate(f"$y \\propto {fit_coeffs[0]:.4g}x$", (-3.5, -1))
+    axis.annotate(f"$\\log{{y}} \\propto {fit_coeffs[0]:.4g}\\log{{x}}$", (-3.5, -1))
     prefactor = 10**fit_coeffs[1]
-    axis.annotate(f"$\\sigma_{{c_{{symm}}}}-\\sigma_{{c}} = {prefactor:.3g}\\eta^{{{fit_coeffs[0]:.3g}}}$", (-3.5, -1.2))
+    axis.annotate(f"$y \\approx {prefactor:.3g}x^{{{fit_coeffs[0]:.3g}}}$", (-3.5, -1.2))
     axis.set_xlabel(r"$\log{\eta}$")
     axis.set_ylabel(r"$\log{\sigma_{c_{symm}} - \sigma_{c}}$")
+    return float(prefactor), float(fit_coeffs[0])
+
+def generate_figure_four(
+    axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray, fit_data: Tuple[float, float]
+) -> None:
+    x_data = [float(eta) for eta in etas]
+    y_data = np.divide(1.0, crit_data[:, 2])
+    axis.scatter(x_data, y_data, 25)
+
+    fit_x = np.linspace(min(x_data), max(x_data), 100)
+    fit_y = 0.25 - fit_data[0]*fit_x**fit_data[1]
+
+    axis.plot(fit_x, fit_y, color="black")
+
+    axis.annotate(f"$\\sigma_{{c}} \\approx 0.25 - {fit_data[0]:.3g} \\eta^{{{fit_data[1]:.3g}}}$", (0.1, 0.2))
+    axis.set_xlabel(r"$\eta$")
+    axis.set_ylabel(r"$\sigma_{c}$ - Critical $\sigma$ value")
 
 def generate_figure_five(
     axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
@@ -467,13 +476,13 @@ figure_3, ax_3 = plt.subplots()
 generate_figure_three(ax_3, etas, fits, eta_dict)
 figure_3.savefig("figures/figure_3.svg")
 
-figure_4, ax_4 = plt.subplots()
-generate_figure_four(ax_4, etas, crit_data)
-figure_4.savefig("figures/figure_4.svg")
-
 figure_4a, ax_4a = plt.subplots()
-generate_figure_four_a(ax_4a, etas, crit_data)
+fit_data = generate_figure_four_a(ax_4a, etas, crit_data)
 figure_4a.savefig("figures/figure_4a.svg")
+
+figure_4, ax_4 = plt.subplots()
+generate_figure_four(ax_4, etas, crit_data, fit_data)
+figure_4.savefig("figures/figure_4.svg")
 
 figure_5, ax_5 = plt.subplots()
 generate_figure_five(ax_5, etas, crit_data)
