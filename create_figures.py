@@ -71,6 +71,26 @@ def generate_figure_four(
     axis.set_xlabel(r"$\eta$")
     axis.set_ylabel(r"$\sigma_{c}$ - Critical $\sigma$ value")
 
+def generate_figure_four_a(
+    axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
+) -> None:
+    x = [float(eta) for eta in etas]
+    y = np.subtract(0.25, np.divide(1.0, crit_data[:, 2]))
+    log_x = np.log10(x)
+    log_y = np.log10(y)
+
+    fit_coeffs = np.polyfit(log_x, log_y, 1)
+    fit_x = np.linspace(min(log_x), max(log_x), 100)
+    fit_y = np.polyval(fit_coeffs, fit_x)
+
+    axis.scatter(log_x, log_y, 25)
+
+    axis.plot(fit_x, fit_y, color="black")
+    axis.annotate(f"$y \\propto {fit_coeffs[0]:.4g}x$", (-3.5, -1))
+    prefactor = 10**fit_coeffs[1]
+    axis.annotate(f"$\\sigma_{{c_{{symm}}}}-\\sigma_{{c}} = {prefactor:.3g}\\eta^{{{fit_coeffs[0]:.3g}}}$", (-3.5, -1.2))
+    axis.set_xlabel(r"$\log{\eta}$")
+    axis.set_ylabel(r"$\log{\sigma_{c_{symm}} - \sigma_{c}}$")
 
 def generate_figure_five(
     axis: matplotlib.axes.Axes, etas: List[float], crit_data: np.ndarray
@@ -437,7 +457,6 @@ etas, fits = compute_critical_approach_fit(data)
 
 figure_1, ax_1 = plt.subplots()
 generate_figure_one(ax_1, data, eta_dict)
-figure_1.show()
 figure_1.savefig("figures/figure_1.svg")
 
 figure_2, ax_2 = plt.subplots()
@@ -451,6 +470,10 @@ figure_3.savefig("figures/figure_3.svg")
 figure_4, ax_4 = plt.subplots()
 generate_figure_four(ax_4, etas, crit_data)
 figure_4.savefig("figures/figure_4.svg")
+
+figure_4a, ax_4a = plt.subplots()
+generate_figure_four_a(ax_4a, etas, crit_data)
+figure_4a.savefig("figures/figure_4a.svg")
 
 figure_5, ax_5 = plt.subplots()
 generate_figure_five(ax_5, etas, crit_data)
